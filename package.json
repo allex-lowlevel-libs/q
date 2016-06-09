@@ -1,0 +1,23 @@
+{
+  "name": "allex_qlowlevellib",
+  "version": "1.0.0",
+  "description": "Implementation of the `q` defer/promise paradigm",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/allex-lowlevel-libs/q.git"
+  },
+  "keywords": [
+    "ecosystem:AllexJS",
+    "q"
+  ],
+  "author": "Andrija Petrovic <andrija.hers@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/allex-lowlevel-libs/q/issues"
+  },
+  "homepage": "https://github.com/allex-lowlevel-libs/q#readme"
+}
