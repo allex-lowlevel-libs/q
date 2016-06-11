@@ -21,6 +21,7 @@ function createDeferred(runNext, promises) {
   Deferred.prototype.notify = function (value) {
     if (this.promise instanceof promises.Promise) {
       runNext(this.promise.notify.bind(this.promise, value));
+      value = null;
     }
   };
   Deferred.prototype.onResolved = function (promise) {

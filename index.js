@@ -77,11 +77,14 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
 
   function fcall(ftion) {
     ///all required arguments should be binded into ftion in order to avoid messing with arguments
+    var ret;
     try {
-      return resolve(ftion());
+      ret = resolve(ftion());
     }catch (e) {
-      return reject(e);
+      ret = reject(e);
     }
+    ftion = null;
+    return ret;
   }
 
   function pfcall (ftion) {
@@ -95,6 +98,8 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
     } catch (e) {
       d.reject(e);
     }
+    when = null;
+    value = null;
     return d.promise;
   }
 

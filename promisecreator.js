@@ -25,6 +25,8 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
   function runFifo (fifo, param) {
     fifo.fire(param);
     fifo.destroy();
+    fifo = null;
+    param = null;
   }
 
   function PromiseBase() {
@@ -304,6 +306,8 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     if (this.promisecount === this.targetcount) {
       this.resolve(this.value);
     }
+    promiseindex = null;
+    promise = null;
   };
 
   function AllSettledMonitor (promisearry) {
@@ -312,6 +316,8 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
   inherit(AllSettledMonitor, PromiseArrayMonitor);
   AllSettledMonitor.prototype.onPromiseRejected = function (promiseindex, promise) {
     PromiseArrayMonitor.prototype.onPromiseResolved.call(this, promiseindex, promise);
+    promiseindex = null;
+    promise = null;
   };
   AllSettledMonitor.prototype.valueOfPromise = function (promise) {
     return promise.inspect();
