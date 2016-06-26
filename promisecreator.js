@@ -263,7 +263,7 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     if (isFunction(this.rejecter)) {
       return Promise.prototype.reject.call(this, this.rejecter(value));
     } else {
-      return Promise.prototype.reject.call(this, this.rejecter);
+      return Promise.prototype.reject.call(this, value);
     }
   };
 
