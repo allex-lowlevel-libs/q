@@ -4,11 +4,22 @@
   "description": "Implementation of the `q` defer/promise paradigm",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/allex-lowlevel-libs/q.git"
+  },
+  "devDependencies": {
+    "allex_checkslowlevellib": "1.x",
+    "allex_functionmanipulationlowlevellib": "1.x",
+    "allex_doublelinkedlistbaselowlevellib": "1.x",
+    "allex_inheritlowlevellib": "3.x",
+    "allex_eventemitterlowlevellib": "2.x",
+    "allex_fifolowlevellib": "1.x",
+    "allex_timeoutlowlevellib": "1.x",
+    "chai": "3.x",
+    "chai-as-promised": "5.x"
   },
   "keywords": [
     "ecosystem:AllexJS",

@@ -10,9 +10,11 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
     return new promises.RejectedPromise(value);
   }
   function allSettled(promisearry) {
+    //TODO type checking
     return new promises.AllSettledMonitor(promisearry);
   }
   function all(promisearry) {
+    //TODO type checking
     return new promises.AllMonitor(promisearry);
   }
   function q(value) {
@@ -94,7 +96,9 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
   function delay(when, value) {
     var d = defer();
     try {
-      lib.runNext(d.resolve.bind(d, value), when);
+      runNext(d.resolve.bind(d, value), when);
+      //TODO fixed bug!
+      //lib.runNext(d.resolve.bind(d, value), when);
     } catch (e) {
       d.reject(e);
     }
