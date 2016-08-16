@@ -30,7 +30,7 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
     }
     var superargs = Array.prototype.slice.call(arguments, 2);
     return function () {
-      var d = defer(), args = superargs.slice(), i;
+      var d = defer(), args = superargs.slice(), i, ret;
       for (i=0; i<arguments.length; i++) {
         args.push(arguments[i]);
       }
@@ -44,8 +44,9 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
       }
       args.push(cb);
       //console.log('applying to nodemethod with', args);
+      ret = d.promise;
       nodemethod.apply(thisarg, args)
-      return d.promise;
+      return ret;
     }
   }
   function nfbind (nodemethod) {
@@ -97,8 +98,6 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
     var d = defer();
     try {
       runNext(d.resolve.bind(d, value), when);
-      //TODO fixed bug!
-      //lib.runNext(d.resolve.bind(d, value), when);
     } catch (e) {
       d.reject(e);
     }

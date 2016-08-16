@@ -1,9 +1,5 @@
 var chai = require('chai'),
-  chaiAsPromised = require('chai-as-promised');
-
-  chai.use(chaiAsPromised);
-
-var expect = chai.expect,
+  expect = chai.expect,
   Checks = require('allex_checkslowlevellib'),
   DListBase = require('allex_doublelinkedlistbaselowlevellib'),
   Inherit = require('allex_inheritlowlevellib')(Checks.isFunction,Checks.isString).inherit,
@@ -267,3 +263,21 @@ describe('\'q\' lib testing: all/allSettled/spread', function(){
     Timeout.runNext(executeAllSettledSpread.bind(null,done,promiseArry,fn3.bind(null,myObj),2),75);
   });
 });
+
+describe('\'q\' lib testing: nfbind', function(){
+  function onFullfilled(done,myObj){
+    myObj.value++;
+    expect(myObj.value).to.be.equal(7);
+    done();
+  }
+  function nodeFn(myObj,cb){
+    myObj.value += 5;
+    cb(null,myObj);
+  }
+  it('Basic: function', function(done){
+    var myObj = {value : 1};
+    var nfn = q.nfbind(nodeFn);
+    nfn(myObj).done(onFullfilled.bind(null,done));
+  });
+});
+
