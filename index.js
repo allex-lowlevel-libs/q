@@ -61,7 +61,7 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
       return reject(Error('Function not provided'));
     }
     d = defer();
-    var args = Array.prototype.slice.call(arguments, 1);
+    var args = Array.prototype.slice.call(arguments, 1),ret;
     args.push(function (err, res) {
       if (err) {
         d.reject(err);
@@ -70,8 +70,9 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
       }
       d = null;
     });
+    ret = d.promise;
     func.apply(null, args);
-    return d.promise;
+    return ret;
   }
 
   function resolve (value) {

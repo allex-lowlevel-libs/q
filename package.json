@@ -1,6 +1,6 @@
 {
   "name": "allex_qlowlevellib",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Implementation of the `q` defer/promise paradigm",
   "main": "index.js",
   "scripts": {

@@ -264,7 +264,7 @@ describe('\'q\' lib testing: all/allSettled/spread', function(){
   });
 });
 
-describe('\'q\' lib testing: nfbind', function(){
+describe('\'q\' lib testing: nfbind/nbind', function(){
   function onFullfilled(done,myObj){
     myObj.value++;
     expect(myObj.value).to.be.equal(7);
@@ -274,10 +274,39 @@ describe('\'q\' lib testing: nfbind', function(){
     myObj.value += 5;
     cb(null,myObj);
   }
-  it('Basic: function', function(done){
+  function MyClass(initVal){
+    this.cnt = initVal;
+  }
+  MyClass.prototype.nodeFn = function(myObj,cb){
+    this.cnt++;
+    myObj.value += 5;
+    cb(null,myObj);
+  }
+  it('Basic: nfbind - function', function(done){
     var myObj = {value : 1};
     var nfn = q.nfbind(nodeFn);
     nfn(myObj).done(onFullfilled.bind(null,done));
+  });
+  it('Basic: nfbind - method', function(done){
+    var myObj = {value : 1};
+    var myInstance = new MyClass(3);
+    var nfn = q.nfbind(myInstance.nodeFn.bind(myInstance));
+    nfn(myObj).done(onFullfilled.bind(null,done));
+  });
+  it('Basic: nbind - function (same behavior as nfbind)', function(done){
+    var myObj = {value : 1};
+    var nfn = q.nbind(nodeFn);
+    nfn(myObj).done(onFullfilled.bind(null,done));
+  });
+  it('Basic: nbind - method', function(done){
+    var myObj = {value : 1};
+    var myInstance = new MyClass(3);
+    var nfn = q.nbind(myInstance.nodeFn,myInstance);
+    nfn(myObj).done(onFullfilled.bind(null,done));
+  });
+  it('Basic: nfcall', function(done){
+    var myObj = {value : 1};
+    q.nfcall(nodeFn,myObj).done(onFullfilled.bind(null,done));
   });
 });
 
