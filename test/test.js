@@ -264,7 +264,7 @@ describe('\'q\' lib testing: all/allSettled/spread', function(){
   });
 });
 
-describe('\'q\' lib testing: nfbind/nbind', function(){
+describe('\'q\' lib testing: nfbind/nbind/nfcall', function(){
   function onFullfilled(done,myObj){
     myObj.value++;
     expect(myObj.value).to.be.equal(7);
@@ -279,6 +279,7 @@ describe('\'q\' lib testing: nfbind/nbind', function(){
   }
   MyClass.prototype.nodeFn = function(myObj,cb){
     this.cnt++;
+    expect(this.cnt).to.be.equal(4);
     myObj.value += 5;
     cb(null,myObj);
   }
@@ -307,6 +308,37 @@ describe('\'q\' lib testing: nfbind/nbind', function(){
   it('Basic: nfcall', function(done){
     var myObj = {value : 1};
     q.nfcall(nodeFn,myObj).done(onFullfilled.bind(null,done));
+  });
+});
+
+describe('\'q\' lib testing: fcall', function(){
+  ///all required arguments should be binded into ftion in order to avoid messing with arguments
+  function onFullfilled(done,myObj){
+    myObj.value++;
+    expect(myObj.value).to.be.equal(7);
+    done();
+  }
+  function nodeFn(myObj){
+    myObj.value += 5;
+    return myObj;
+  }
+  function MyClass(initVal){
+    this.cnt = initVal;
+  }
+  MyClass.prototype.nodeFn = function(myObj){
+    this.cnt++;
+    expect(this.cnt).to.be.equal(4);
+    myObj.value += 5;
+    return myObj;
+  }
+  it('Basic: fcall - function', function(done){
+    var myObj = {value : 1};
+    q.fcall(nodeFn.bind(null,myObj)).done(onFullfilled.bind(null,done));
+  });
+  it('Basic: fcall - method', function(done){
+    var myObj = {value : 1};
+    var myInstance = new MyClass(3);
+    q.fcall(myInstance.nodeFn.bind(myInstance,myObj)).done(onFullfilled.bind(null,done));
   });
 });
 
