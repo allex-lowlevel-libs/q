@@ -97,9 +97,15 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     this.notifiers = new _EventEmitter();
     this.value = null;
     this.state = null;
+    this.future = null;
   }
   inherit(Promise, PromiseBase);
   Promise.prototype.destroy = function () {
+    if (this.future !== null) {
+      console.trace();
+      console.error(process.pid, 'Cannot have future in destructor');
+      throw Error('Cannot have future in destructor');
+    }
     if (this.resolvers) {
       if (this.state === STATE_RESOLVED) {
         if (isPromise(this.value) && this.value.isPending()) {
@@ -198,11 +204,15 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
       console.error('Who called me dead?');
       return;
     }
+    if (this.future) {
+      return this.future;
+    }
     v = resolve(value);
     if (isPromise(v) && v.isPending()) {
+      this.future = v;
       return v.then(
-        this.resolve.bind(this),
-        this.reject.bind(this),
+        this.onFutureResolved.bind(this),
+        this.onFutureRejected.bind(this),
         this.notify.bind(this)
       );
     } else {
@@ -215,6 +225,9 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
   };
   Promise.prototype.reject = function (value) {
     if (!this.resolvers) {
+      return;
+    }
+    if (this.future) {
       return;
     }
     this.value = value;
@@ -230,6 +243,14 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     }
     this.notifiers.fire(value);
     value = null;
+  };
+  Promise.prototype.onFutureResolved = function (value) {
+    this.future = null;
+    this.resolve(value);
+  };
+  Promise.prototype.onFutureRejected = function (value) {
+    this.future = null;
+    this.reject(value);
   };
 
   function FuturePromise (resolver, rejecter) {
