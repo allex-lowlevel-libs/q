@@ -350,7 +350,7 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
   inherit(AllMonitor, PromiseArrayMonitor);
   AllMonitor.prototype.onPromiseRejected = function (promiseindex, promise) {
     this.ackPromise(promiseindex, promise);
-    this.reject(this.value);
+    this.reject(this.value[promiseindex]);
   };
   AllMonitor.prototype.valueOfPromise = function (promise) {
     return promise.value;
