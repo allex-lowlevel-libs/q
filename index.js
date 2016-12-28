@@ -80,10 +80,11 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
   }
 
   function fcall(ftion) {
-    ///all required arguments should be binded into ftion in order to avoid messing with arguments
+    ///all required arguments should be bound into ftion in order to avoid messing with arguments
     var ret;
     try {
-      ret = resolve(ftion());
+      ret = ftion();
+      ret = promises.isThenable(ret) ? ret : resolve(ret);
     }catch (e) {
       ret = reject(e);
     }
@@ -116,6 +117,7 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
   q.all = all;
   q.allSettled = allSettled;
   q.isPromise = promises.isPromise;
+  q.isThenable = promises.isThenable;
   q.nbind = nbind;
   q.nfcall = nfcall;
   q.nfbind = nfbind;

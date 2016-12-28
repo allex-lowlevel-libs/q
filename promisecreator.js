@@ -360,6 +360,10 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     return thingy instanceof PromiseBase;
   }
 
+  function isThenable (thingy) {
+    return thingy && isFunction(thingy.then);
+  }
+
   function isRejected (thingy) {
     return thingy instanceof RejectedPromise;
   }
@@ -370,7 +374,8 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     Promise: Promise,
     AllSettledMonitor: AllSettledMonitor,
     AllMonitor: AllMonitor,
-    isPromise: isPromise
+    isPromise: isPromise,
+    isThenable: isThenable
   };
 }
 
