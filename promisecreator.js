@@ -4,9 +4,17 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
   var STATE_RESOLVED = 1,
     STATE_REJECTED = 2;
 
+  function isPromise (thingy) {
+    return isThenable(thingy) && isFunction(thingy.spread) && 'value' in thingy;
+  }
+  function isThenable (thingy) {
+    return thingy && isFunction(thingy.then);
+  }
+  function isRejected (thingy) {
+    return thingy instanceof RejectedPromise;
+  }
   function resolve(val) {
-    var i;
-    if (val instanceof PromiseBase) {
+    if (isPromise(val)) {
       if (val.isPending()) {
         return val;
       }
@@ -355,18 +363,6 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
   AllMonitor.prototype.valueOfPromise = function (promise) {
     return promise.value;
   };
-
-  function isPromise (thingy) {
-    return thingy instanceof PromiseBase;
-  }
-
-  function isThenable (thingy) {
-    return thingy && isFunction(thingy.then);
-  }
-
-  function isRejected (thingy) {
-    return thingy instanceof RejectedPromise;
-  }
 
   return {
     ResolvedPromise: ResolvedPromise,
