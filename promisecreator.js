@@ -4,16 +4,38 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
   var STATE_RESOLVED = 1,
     STATE_REJECTED = 2;
 
+  function shouldBeTestedForThen (thingy) {
+    var tot;
+    if (!thingy) {
+      return false;
+    }
+    tot = typeof thingy;
+    if ('object' === tot) {
+      return true;
+    }
+    if ('function' === tot) {
+      return true;
+    }
+    return false;
+  }
   function isPromise (thingy) {
-    return isThenable(thingy) && isFunction(thingy.spread) && 'value' in thingy;
+    return thingy instanceof PromiseBase;
+    //return isThenable(thingy) && isFunction(thingy.spread) && 'value' in thingy;
   }
   function isThenable (thingy) {
     return thingy && isFunction(thingy.then);
   }
-  function isRejected (thingy) {
-    return thingy instanceof RejectedPromise;
+  function rejectedValue (thingy) {
+    var i;
+    if (thingy && isFunction(thingy.describeSelf)) {
+      i = thingy.describeSelf();
+      if (i.state==='rejected') {
+        return {value: i.reason};
+      }
+    }
+    return null;
   }
-  function resolve(val) {
+  function evaluate(val) {
     if (isPromise(val)) {
       if (val.isPending()) {
         return val;
@@ -46,7 +68,7 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
   };
   function spreader(resolver, resultarry) {
     var ret;
-    if (isArray) {
+    if (isArray(resultarry)) {
       ret = resolver.apply(null, resultarry);
     } else {
       ret = resolver(resultarry);
@@ -59,7 +81,7 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
   };
 
   function ResolvedPromise(value) {
-    this.value = resolve(value);
+    this.value = evaluate(value);
   }
   inherit(ResolvedPromise, PromiseBase);
   ResolvedPromise.prototype.destroy = dummyFunc;
@@ -68,7 +90,7 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
       runNext(resolver.bind(null, this.value));
     }
   };
-  ResolvedPromise.prototype.inspect = function () {
+  ResolvedPromise.prototype.describeSelf = function () {
     return {state: 'fulfilled', value: this.value};
   };
   ResolvedPromise.prototype.isPending = function () {
@@ -82,11 +104,31 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
   inherit(RejectedPromise, PromiseBase);
   RejectedPromise.prototype.destroy = dummyFunc;
   RejectedPromise.prototype.done = function(resolver, rejecter, notifier) {
-    if (rejecter) {
-      runNext(rejecter.bind(null, this.value));
+    if (isFunction(rejecter)) {
+      runNext(rejectionOnRejected.bind(null, this, rejecter));
     }
   };
-  RejectedPromise.prototype.inspect = function () {
+  function rejectionOnRejected (rp, rejecter) {
+    var rv;
+    try {
+      rv = rejecter(rp.value);
+      rejectionSetter(rp, rv);
+    }
+    catch (e) {
+      console.log(e);
+      rp.value = e;
+    }
+    rp = null;
+    rejecter = null;
+  }
+  function rejectionSetter (rp, rejval) {
+    if (isThenable(rejval)) {
+      rejval.then(rejectionSetter.bind(null, rp), rejectionSetter.bind(null, rp));
+    }
+    rp = null;
+    rejval = null;
+  }
+  RejectedPromise.prototype.describeSelf = function () {
     return {state: 'rejected', reason: this.value};
   };
   RejectedPromise.prototype.catch = function (cb) {
@@ -121,7 +163,7 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
           console.error('Well, how did I get here?!');
           //process.exit(0);
         }
-        postponeFifoDestruction(this.resolvers, resolve(this.value));
+        postponeFifoDestruction(this.resolvers, evaluate(this.value));
       } else {
         this.resolvers.destroy();
       }
@@ -152,12 +194,12 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
       this.notifiers = null;
     }
   };
-  Promise.prototype.inspect = function () {
+  Promise.prototype.describeSelf = function () {
     if (this.state === STATE_RESOLVED) {
-      return ResolvedPromise.prototype.inspect.call(this);
+      return ResolvedPromise.prototype.describeSelf.call(this);
     }
     if (this.state === STATE_REJECTED) {
-      return RejectedPromise.prototype.inspect.call(this);
+      return RejectedPromise.prototype.describeSelf.call(this);
     }
     return {state: 'pending'};
   };
@@ -167,7 +209,7 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
   Promise.prototype.done = function (resolver, rejecter, notifier) {
     if (!this.resolvers) {
       if (resolver && this.state === STATE_RESOLVED) {
-        runNext(resolver.bind(null, resolve(this.value)));
+        runNext(resolver.bind(null, evaluate(this.value)));
       }
       if (rejecter && this.state === STATE_REJECTED) {
         runNext(rejecter.bind(null, this.value));
@@ -201,36 +243,69 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     var v = this.resolve(value);
     if (isPromise(v) && v.isPending()) {
       return null;
-    } else {
-      return new ResolvedPromise(v);
     }
+    return new ResolvedPromise(v);
   };
   Promise.prototype.resolve = function (value) {
-    var v;
+    var v, vthen, lpc;
     if (!this.resolvers) {
+      /*
       console.trace();
       console.error('Who called me dead?');
+      */
       return;
     }
     if (this.future) {
       return this.future;
     }
-    v = resolve(value);
-    if (isPromise(v) && v.isPending()) {
-      this.future = v;
-      return v.then(
-        this.onFutureResolved.bind(this),
-        this.onFutureRejected.bind(this),
-        this.notify.bind(this)
-      );
-    } else {
-      this.value = v;
-      this.state = STATE_RESOLVED;
-      this.destroy();
-      return v;
-      //return new ResolvedPromise(v);
+    if (isPromise(value)) {
+      if (value.isPending()) {
+        this.future = value;
+        lpc = new LaterPromiseCaller(this);
+        return lpc.callMethod(value);
+      }
+      v = value.describeSelf();
+      if (v.state === 'rejected') {
+        this.value = v.reason;
+        this.state = STATE_REJECTED;
+        this.destroy();
+        return v.reason;
+      }
+      if (v.state === 'fulfilled') {
+        return this.resolve(v.value);
+      }
     }
+    if (shouldBeTestedForThen(value)) {
+      try {
+        vthen = value.then;
+        if (isFunction(vthen)) {
+          this.future = value;
+          runNext(vThenCaller.bind(null, this, value, vthen));
+          return this;
+        }
+      }
+      catch (e) {
+        this.reject(e);
+        return this;
+      }
+    }
+    this.value = value;
+    this.state = STATE_RESOLVED;
+    this.destroy();
+    return value;
   };
+  function vThenCaller (p, v, vthen) {
+    var lpc = new LaterPromiseCaller(p);
+    try {
+      lpc.callFunction(v, vthen);
+    }
+    catch (e) {
+      lpc.onRejected(e);
+    }
+    p = null;
+    v = null;
+    vthen = null;
+  }
   Promise.prototype.reject = function (value) {
     if (!this.resolvers) {
       return;
@@ -261,6 +336,46 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     this.reject(value);
   };
 
+  function LaterPromiseCaller (promise) {
+    this.promise = promise;
+  };
+  LaterPromiseCaller.prototype.destroy = function () {
+    this.promise = null;
+  }
+  LaterPromiseCaller.prototype.callMethod = function (thenable) {
+    if (!this.promise) {
+      return RejectedPromise(new Error('Destroyed'));
+    }
+    return thenable.then(
+      this.onResolved.bind(this),
+      this.onRejected.bind(this),
+      this.promise.notify.bind(this.promise)
+    );
+  };
+  LaterPromiseCaller.prototype.callFunction = function (obj, then) {
+    then.call(obj, this.onResolved.bind(this), this.onRejected.bind(this));
+  };
+  LaterPromiseCaller.prototype.onResolved = function (result) {
+    var p = this.promise, ret;
+    this.promise = null;
+    if (!p) {
+      return;
+    }
+    ret = p.onFutureResolved(result);
+    this.destroy();
+    return ret;
+  };
+  LaterPromiseCaller.prototype.onRejected = function (reason) {
+    var ret, p = this.promise;
+    this.promise = null;
+    if (!p) {
+      return;
+    }
+    ret = p.onFutureRejected(reason);
+    this.destroy();
+    return ret;
+  };
+
   function FuturePromise (resolver, rejecter) {
     Promise.call(this);
     this.resolver = resolver;
@@ -273,14 +388,23 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     Promise.prototype.destroy.call(this);
   };
   FuturePromise.prototype.resolve = function (value) {
-    var r;
+    var r, rv;
     if (isPromise(value) && value.isPending()) {
       return Promise.prototype.resolve.call(this, value);
     }
     if (isFunction(this.resolver)) {
-      r = this.resolver(resolve(value));
-      if (isRejected(r)) {
-        return Promise.prototype.reject.call(this, r.value);
+      try {
+        r = this.resolver.call(void(0), evaluate(value));
+        if (r === this) {
+          throw new TypeError('Promises/A+ 2.3.1');
+        }
+        rv = rejectedValue(r);
+        if (rv && rv.value) {
+          return Promise.prototype.reject.call(this, rv.value);
+        }
+      }
+      catch (e) {
+        return Promise.prototype.reject.call(this, e);
       }
       this.resolver = r;
     } else {
@@ -289,8 +413,23 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     return Promise.prototype.resolve.call(this, this.resolver);
   };
   FuturePromise.prototype.reject = function (value) {
+    var r, rv;
     if (isFunction(this.rejecter)) {
-      return Promise.prototype.reject.call(this, this.rejecter(value));
+      try {
+        r = this.rejecter.call(void(0), value);
+        this.rejecter = null;
+        if (r === this) {
+          throw new TypeError('Promises/A+ 2.3.1');
+        }
+        rv = rejectedValue(r);
+        if (rv && rv.value) {
+          return Promise.prototype.reject.call(this, rv.value);
+        }
+        return Promise.prototype.resolve.call(this, r);
+      }
+      catch (e) {
+        return Promise.prototype.reject.call(this, e);
+      }
     } else {
       return Promise.prototype.reject.call(this, value);
     }
@@ -317,10 +456,10 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     Promise.prototype.destroy.call(this);
   };
   PromiseArrayMonitor.prototype.attachPromise = function (promise, promiseindex, promisearry) {
-    if (!(promise && promise.inspect)) {
+    if (!(promise && promise.describeSelf)) {
       console.log('wut m8?', promisearry, 'at', promiseindex);
     }
-    this.value[promiseindex] = promise.inspect();
+    this.value[promiseindex] = promise.describeSelf();
     promise.then(
       this.onPromiseResolved.bind(this, promiseindex, promise),
       this.onPromiseRejected.bind(this, promiseindex, promise)
@@ -349,7 +488,7 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     promise = null;
   };
   AllSettledMonitor.prototype.valueOfPromise = function (promise) {
-    return promise.inspect();
+    return promise.describeSelf();
   };
 
   function AllMonitor (promisearry) {

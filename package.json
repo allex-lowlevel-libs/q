@@ -1,6 +1,6 @@
 {
   "name": "allex_qlowlevellib",
-  "version": "1.1.2",
+  "version": "2.0.0",
   "description": "Implementation of the `q` defer/promise paradigm",
   "main": "index.js",
   "scripts": {
@@ -18,7 +18,8 @@
     "allex_eventemitterlowlevellib": "2.x",
     "allex_fifolowlevellib": "1.x",
     "allex_timeoutlowlevellib": "1.x",
-    "chai": "3.x"
+    "chai": "3.x",
+    "promises-aplus-tests": "2.x"
   },
   "keywords": [
     "ecosystem:AllexJS",
