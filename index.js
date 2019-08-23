@@ -112,6 +112,10 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
     return all(promisearry).spread (resolver, rejecter, notifier);
   }
 
+  function breakRejectionChain (val) {
+    promises.breakRejectionChain = val;
+  }
+
   q.defer = defer;
   q.reject = reject;
   q.all = all;
@@ -126,6 +130,7 @@ function createQ(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter
   q.pfcall = pfcall;
   q.delay = delay;
   q.spread = spread;
+  q.breakRejectionChain = breakRejectionChain;
 
   return q;
 }

@@ -1,6 +1,9 @@
 function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _EventEmitter) {
   'use strict'
 
+  var ret = {
+    breakRejectionChain: false
+  };
   var STATE_RESOLVED = 1,
     STATE_REJECTED = 2;
 
@@ -115,6 +118,9 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
       rejectionSetter(rp, rv);
     }
     catch (e) {
+      if (ret.breakRejectionChain) {
+        throw e;
+      }
       console.log(e);
       rp.value = e;
     }
@@ -285,6 +291,9 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
         }
       }
       catch (e) {
+        if (ret.breakRejectionChain) {
+          throw e;
+        }
         this.reject(e);
         return this;
       }
@@ -300,6 +309,9 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
       lpc.callFunction(v, vthen);
     }
     catch (e) {
+      if (ret.breakRejectionChain) {
+        throw e;
+      }
       lpc.onRejected(e);
     }
     p = null;
@@ -404,6 +416,9 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
         }
       }
       catch (e) {
+        if (ret.breakRejectionChain) {
+          throw e;
+        }
         return Promise.prototype.reject.call(this, e);
       }
       this.resolver = r;
@@ -428,6 +443,9 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
         return Promise.prototype.resolve.call(this, r);
       }
       catch (e) {
+        if (ret.breakRejectionChain) {
+          throw e;
+        }
         return Promise.prototype.reject.call(this, e);
       }
     } else {
@@ -503,15 +521,15 @@ function createPromises(runNext, isArray, isFunction, inherit, dummyFunc, _Event
     return promise.value;
   };
 
-  return {
-    ResolvedPromise: ResolvedPromise,
-    RejectedPromise: RejectedPromise,
-    Promise: Promise,
-    AllSettledMonitor: AllSettledMonitor,
-    AllMonitor: AllMonitor,
-    isPromise: isPromise,
-    isThenable: isThenable
-  };
+  ret.ResolvedPromise = ResolvedPromise;
+  ret.RejectedPromise = RejectedPromise;
+  ret.Promise = Promise;
+  ret.AllSettledMonitor = AllSettledMonitor;
+  ret.AllMonitor = AllMonitor;
+  ret.isPromise = isPromise;
+  ret.isThenable = isThenable;
+
+  return ret;
 }
 
 module.exports = createPromises;

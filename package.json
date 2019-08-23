@@ -18,7 +18,9 @@
     "allex_eventemitterlowlevellib": "2.x",
     "allex_fifolowlevellib": "1.x",
     "allex_timeoutlowlevellib": "1.x",
-    "chai": "3.x",
+    "mocha": "6.x",
+    "chai": "4.x",
+    "chai-as-promised": "7.x",
     "promises-aplus-tests": "2.x"
   },
   "keywords": [
